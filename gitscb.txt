@@ -1,0 +1,108 @@
+# ----------- NONFASTFORWARD -----------
+git fetch origin
+git rebase origin/main
+git push origin main
+
+
+# ----------- FEATUREPUSH -----------
+git branch
+git checkout feature-branch
+git push origin feature-branch
+
+
+# ----------- NEWBRANCHES -----------
+git fetch origin
+git pull origin main
+
+
+# ----------- SAFEUPDATE -----------
+git fetch origin
+git rebase origin/main
+
+
+# ----------- REMOVESECRET -----------
+git filter-branch --force --index-filter "git rm --cached --ignore-unmatch secrets.txt" \
+--prune-empty --tag-name-filter cat -- --all
+git push --force --all
+echo secrets.txt >> .gitignore
+
+
+# ----------- FEATUREUPDATE -----------
+git fetch origin
+git checkout feature-branch
+git merge origin/main
+# OR
+git fetch origin
+git checkout feature-branch
+git rebase origin/main
+
+
+# ----------- CHANGEREMOTE -----------
+git remote -v
+git remote add new-remote <new_repo_url>
+git remote set-url origin <new_repo_url>
+git push origin branch-name
+
+
+# ----------- UPDATELOCAL -----------
+git fetch origin
+git rebase origin/branch-name
+# OR
+git merge origin/branch-name
+
+
+# ----------- CONFLICTS -----------
+git status
+git add <file>
+git rebase --continue
+# OR
+git commit
+git push origin branch
+
+
+# ----------- REMOTEDELETE -----------
+git push origin --delete feature-branch
+git branch -d feature-branch
+# OR force
+git branch -D feature-branch
+
+
+# ----------- MAINUPDATE -----------
+git checkout main
+git pull origin main
+
+
+# ----------- FEATURESYNC -----------
+git checkout feature/ui-update
+git merge main
+# OR clean history
+git rebase main
+
+
+# ----------- FEATUREPUSHFIX -----------
+git push origin feature/ui-update
+git pull --rebase origin feature/ui-update
+git add .
+git rebase --continue
+git push origin feature/ui-update
+
+
+# ----------- PATCHAPPLY -----------
+git apply fix.patch
+git add .
+git commit -m "Apply patch file"
+
+
+# ----------- MAINMERGE -----------
+git checkout main
+git pull origin main
+git merge feature/ui-update
+git push origin main
+git branch -d feature/ui-update
+git push origin --delete feature/ui-update
+
+
+# ----------- PATCHCREATE -----------
+git format-patch -1 HEAD
+git format-patch -1 HEAD -o patches/
+cat 0001-*.patch > my_patch_file.patch
