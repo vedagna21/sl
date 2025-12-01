@@ -1,0 +1,94 @@
+############################################
+# DOCKER ESSENTIALS – COMPLETE SCRIPT
+############################################
+
+echo "=== 1. Build Maven Project (if needed) ==="
+mvn clean package
+
+echo "=== 2. Build Docker Image ==="
+docker build -t libraryregistration:1.0 .
+
+echo "=== 3. List Images ==="
+docker images
+
+echo "=== 4. Run Container (Tomcat app on port 9090) ==="
+docker run -d --name library-app -p 9090:8080 libraryregistration:1.0
+
+echo "Your app is available at: http://localhost:9090/"
+echo
+
+############################################
+# CONTAINER MANAGEMENT
+############################################
+
+echo "=== 5. List Running Containers ==="
+docker ps
+
+echo "=== 6. List All Containers (including stopped) ==="
+docker ps -a
+
+echo "=== 7. Stop a Container ==="
+docker stop library-app
+
+echo "=== 8. Start a Container ==="
+docker start library-app
+
+echo "=== 9. Remove a Container ==="
+docker rm -f library-app
+
+############################################
+# DOCKER HUB OPERATIONS
+############################################
+
+echo "=== 10. Login to Docker Hub ==="
+docker login
+
+echo "=== 11. Tag Image for Docker Hub ==="
+docker tag libraryregistration:1.0 yourdockerusername/libraryregistration:1.0
+
+echo "=== 12. Push Image to Docker Hub ==="
+docker push yourdockerusername/libraryregistration:1.0
+
+############################################
+# CLEANUP COMMANDS
+############################################
+
+echo "=== 13. Remove Unused Images ==="
+docker image prune -f
+
+echo "=== 14. Remove Stopped Containers ==="
+docker container prune -f
+
+############################################
+# REDIS – INSTALL, RUN & CHECK
+############################################
+
+echo "=== 15. Pull Redis Image ==="
+docker pull redis
+
+echo "=== 16. Run Redis Container on port 6379 ==="
+docker run -d --name redis-server -p 6379:6379 redis
+
+echo "Redis server running on port 6379"
+echo "To test Redis, use the following commands:"
+echo
+echo "  docker exec -it redis-server redis-cli"
+echo "Inside redis-cli, test with:"
+echo "  SET mykey 'hello'"
+echo "  GET mykey"
+echo
+
+echo "=== 17. View Redis Logs ==="
+docker logs redis-server
+
+echo "=== 18. Stop Redis ==="
+docker stop redis-server
+
+echo "=== 19. Start Redis ==="
+docker start redis-server
+
+echo "=== 20. Remove Redis Container ==="
+docker rm -f redis-server
+
+############################################
+echo "=== ALL DOCKER COMMANDS EXECUTED ==="
