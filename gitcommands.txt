@@ -1,0 +1,170 @@
+# ---------------- BASIC CONFIG ----------------
+# Check Git version
+git --version
+
+# Set username
+git config --global user.name "Your Name"
+
+# Set email
+git config --global user.email "you@example.com"
+
+# View all configs
+git config --list
+
+
+# ---------------- REPOSITORY SETUP ----------------
+# Initialize a repository
+git init
+
+# Clone a repo
+git clone <repo-url>
+
+# View remotes
+git remote -v
+
+# Add a remote
+git remote add origin <repo-url>
+
+# Remove remote
+git remote remove origin
+
+# Rename remote
+git remote rename origin upstream
+
+# Change remote URL
+git remote set-url origin <new-url>
+
+# Show remote info
+git remote show origin
+
+
+# ---------------- STAGING & COMMITTING ----------------
+# Check status
+git status
+
+# Add specific file
+git add file.txt
+
+# Add all files
+git add .
+
+# Commit changes
+git commit -m "message"
+
+# Amend last commit message
+git commit --amend -m "new message"
+
+
+# ---------------- BRANCHING ----------------
+# List branches
+git branch
+
+# List all branches including remote
+git branch -a
+
+# Create a branch
+git branch feature-login
+
+# Switch to a branch
+git checkout feature-login
+
+# Create + switch branch
+git checkout -b new-branch
+
+# Delete branch
+git branch -d feature-ui
+
+# Force delete branch
+git branch -D feature-ui
+
+# See merged branches
+git branch --merged
+
+# Prune deleted remote branches
+git remote prune origin
+
+# Fetch specific branch
+git fetch origin feature-login
+
+# Set upstream branch
+git push --set-upstream origin feature-login
+
+# Rebase branch onto remote main
+git fetch origin
+git rebase origin/main
+
+
+# ---------------- UNDO / RESET ----------------
+# Unstage file
+git reset file.txt
+
+# Restore working directory file
+git restore file.txt
+
+# Revert a commit
+git revert <commit-hash>
+
+# Hard reset (dangerous)
+git reset --hard <commit-hash>
+
+
+# ---------------- VIEWING HISTORY ----------------
+# Full history
+git log
+
+# One-line log
+git log --oneline
+
+# Show changes (unstaged)
+git diff
+
+# Show staged diff
+git diff --staged
+
+# Show commit details
+git show <commit>
+
+# Show who edited each line
+git blame file.txt
+
+# Recover deleted branch using reflog
+git reflog
+git checkout -b branch-name <commit-hash>
+
+
+# ---------------- REMOTE OPERATIONS ----------------
+# Push to remote
+git push origin main
+
+# Pull + merge
+git pull origin main
+
+# Fetch without merging
+git fetch origin
+
+
+# ---------------- GITIGNORE ----------------
+# Create .gitignore
+touch .gitignore
+
+
+# ---------------- STASH ----------------
+# Stash changes
+git stash
+
+# List stashes
+git stash list
+
+# Apply stash
+git stash apply
+
+
+# ---------------- CLEAN HISTORY ----------------
+# Remove sensitive file from entire history
+git filter-branch --force --index-filter \
+"git rm --cached --ignore-unmatch secrets.txt" \
+--prune-empty --tag-name-filter cat -- --all
+
+
+# ---------------- DELETE MULTIPLE BRANCHES ----------------
+git branch -d branch1 branch2 branch3
