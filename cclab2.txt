@@ -1,0 +1,600 @@
+Week-6 : VPC USING NAT GATEWAY
+
+🧱 STEP 1: Create VPC
+Search: VPC
+Click VPC Dashboard
+Click Create VPC
+Fill:
+Name: MyVPC
+IPv4 CIDR: 10.0.0.0/16
+👉 Click Create VPC
+🌐 STEP 2: Create Subnets
+Go to:
+Left side → Subnets → Create subnet
+🔹 Public Subnet (for Bastion)
+Fill:
+Name: Public-Subnet
+VPC: MyVPC
+Availability Zone: ap-south-1a
+CIDR: 10.0.1.0/24
+👉 Click Add new subnet
+🔹 Private Subnet (for DB)
+Fill:
+Name: Private-Subnet
+CIDR: 10.0.2.0/24
+👉 Click Create subnet
+🌍 STEP 3: Internet Gateway
+Left → Internet Gateways
+Click Create
+Fill:
+Name: MyIGW
+👉 Click Create
+Attach it:
+Select IGW
+Click Actions → Attach to VPC
+Select MyVPC
+🛣️ STEP 4: Route Table (Internet access for Bastion)
+Left → Route Tables
+Click Create route table
+Fill:
+Name: Public-RT
+VPC: MyVPC
+👉 Click Create
+Add Internet Route:
+Select Public-RT
+Go to Routes tab
+Click Edit routes → Add route
+Fill:
+Destination: 0.0.0.0/0
+Target: Internet Gateway → MyIGW
+👉 Save
+Attach to Public Subnet:
+Go to Subnet Associations
+Click Edit
+Select Public-Subnet
+👉 Save
+🔐 STEP 5: Security Groups
+🔹 Bastion Security Group
+Go to:
+EC2 → Security Groups → Create
+Fill:
+Name: Bastion-SG
+Inbound:
+Type: SSH
+Port: 22
+Source: My IP (click button)
+👉 Create
+🔹 DB Security Group
+Create new:
+Name: DB-SG
+Add rules:
+MySQL:
+Port: 3306
+Source: 10.0.1.0/24
+SSH:
+Port: 22
+Source: (later we update with Bastion private IP)
+👉 Create
+💻 STEP 6: Launch Bastion Server
+Go to:
+EC2 → Launch Instance
+Fill:
+Name: Bastion
+OS: Ubuntu
+Instance: t2.micro
+Key Pair:
+Click Create new key
+Name: bastion
+Download bastion.pem
+Network:
+VPC: MyVPC
+Subnet: Public-Subnet
+Auto-assign Public IP: Enable
+Security:
+Select: Bastion-SG
+👉 Click Launch
+💻 STEP 7: Launch DB Server
+Again → Launch Instance
+Fill:
+Name: DB-Server
+OS: Ubuntu
+Instance: t2.micro
+Key Pair:
+Create: dbserver.pem
+Network:
+Subnet: Private-Subnet
+Auto Public IP: ❌ Disable
+Security:
+Select: DB-SG
+👉 Launch
+🔎 STEP 8: Get Bastion Private IP
+Go to EC2 → Instances
+Click Bastion
+Copy Private IP (example: 10.0.1.45)
+🔐 STEP 9: Update DB Security Group
+Go to:
+Security Groups → DB-SG
+Edit inbound rule:
+SSH → Source:
+10.0.1.45/32
+👉 Save
+📁 STEP 10: Copy DB Key to Bastion
+On your PC (PowerShell):
+scp -i bastion.pem dbserver.pem ubuntu@<Bastion_Public_IP>:/home/ubuntu/
+🔑 STEP 11: Login to Bastion
+ssh -i bastion.pem ubuntu@<Bastion_Public_IP>
+🔁 STEP 12: From Bastion → DB Server
+Inside Bastion:
+chmod 400 dbserver.pem
+ssh -i dbserver.pem ubuntu@10.0.2.x
+(Replace with DB private IP)
+
+
+
+
+
+
+Week 7- Lambda:
+
+STEP 1: Open Lambda
+Login to AWS
+Search: Lambda
+Click Lambda
+STEP 2: Create Function
+Click Create function
+Select Author from scratch
+Function name: basic-python-lambda
+Runtime: Python 3.9 (or latest)
+Architecture: x86_64
+Expand Change default execution role
+Select Use existing role
+Choose LabRole
+Click Create function
+STEP 3: Add Code
+Delete default code
+Paste:
+import json
+def lambda_handler(event, context):
+    a = event.get('num1', 0)
+    b = event.get('num2', 0)
+    result = a + b
+    return {
+        'statusCode': 200,
+        'body': json.dumps({'sum': result})
+    }
+
+STEP 4: Deploy
+Click Deploy
+STEP 5: Create Test Event
+Click Test
+Click Create new event
+Event name: testInput
+Paste:
+{
+  "num1": 10,
+  "num2": 20
+}
+Click Test
+STEP 6: Configuration
+Go to Configuration tab
+Click General configuration → Edit
+Memory: 128 MB
+Timeout: 3 seconds
+Architecture: x86_64
+Click Save
+
+
+
+
+
+Week-8:
+PART 1: SNS
+Search SNS → Topics → Create topic
+Type: Standard
+Name: MyEmailTopic
+Create
+Open topic → Subscriptions → Create subscription
+Protocol: Email
+Endpoint: your email
+Create
+Check email → Confirm subscription
+Open topic → Publish message → Send test
+
+PART 2: S3 → SNS
+Search S3 → Create bucket
+Name: my-upload-bucket-2026
+Region: same as SNS
+Create
+Open bucket → Properties → Event notifications → Create
+Name: UploadNotification
+Event type: All object create events
+Destination: SNS topic → MyEmailTopic
+Save
+Upload file → check email
+
+PART 3: SQS
+Search SQS → Create queue
+Type: Standard
+Name: MyQueue
+Create
+Open queue → Send and receive messages
+Enter message → Send
+Click Poll for messages
+
+PART 4: CONNECT SNS → SQS
+Create SNS topic: MyS3SNSTopic
+Create SQS queue: MyS3Queue
+Open SNS topic → Create subscription
+Protocol: Amazon SQS
+Endpoint: MyS3Queue
+Create
+Go to SQS → MyS3Queue → Access policy → allow SNS
+PART 5: CONNECT S3 → SNS
+Open S3 bucket → Properties → Event notifications → Create
+Name: UploadEvent
+Event: All object create events
+Destination: SNS topic → MyS3SNSTopic
+Save
+PART 6: LAMBDA
+Search Lambda → Create function
+Name: SQSConsumerFunction
+Runtime: Python
+Execution role: Use existing role → LabRole
+Create
+Open function → Add trigger
+Select: SQS
+Choose: MyS3Queue
+Add
+Replace code:
+def lambda_handler(event, context):
+    for record in event['Records']:
+        print("Message received:")
+        print(record['body'])
+    return {'statusCode':200,'body':'Processed'}
+Deploy
+PART 7: TEST
+Go to S3 → Upload file
+PART 8: VERIFY
+Go to Lambda → Monitor → View logs in CloudWatch
+Check logs
+
+
+
+
+
+
+
+Week-9:
+```text
+PART 1: EC2
+EC2 → Instances → Launch Instance
+Name: webserver-1
+AMI: Amazon Linux 2
+Type: t2.micro
+Security Group: SSH (22) → My IP, HTTP (80) → 0.0.0.0/0
+Launch → download key
+ssh -i key.pem ec2-user@<public-ip>
+sudo yum update -y
+sudo yum install httpd -y
+sudo systemctl start httpd
+sudo systemctl enable httpd
+echo "This is Server 1" | sudo tee /var/www/html/index.html
+Repeat for webserver-2 (change text)
+PART 2: ALB
+EC2 → Security Groups → Create
+Name: lb-sg
+HTTP (80) → 0.0.0.0/0
+EC2 → Load Balancers → Create → Application Load Balancer
+Name: my-alb
+Scheme: Internet-facing
+IPv4
+Select VPC
+Select 2 subnets
+Select lb-sg
+Create Target Group
+Name: web-servers-tg
+Type: Instance
+Protocol: HTTP 80
+Register: webserver-1, webserver-2
+Create Load Balancer
+EC2 → Load Balancers → my-alb
+Listeners → View/edit rules
+Forward to: web-servers-tg
+Save
+Copy DNS → browser → refresh
+PART 3: AUTO SCALING
+EC2 → Instances → select instance
+Actions → Image → Create Image
+Name: my-webserver-ami → wait Available
+EC2 → Launch Templates → Create
+Name: my-launch-template
+AMI: my-webserver-ami
+Type: t2.micro
+Key pair: select
+Security group: same
+Create
+EC2 → Auto Scaling Groups → Create
+Name: webserver-asg
+Template: my-launch-template
+VPC: select
+Subnets: select all
+Attach Load Balancer: Select target group web-servers-tg
+Health check: EC2 + ELB
+Grace period: 300
+Capacity: Desired 2, Min 1, Max 4
+Create ASG
+Terminate one instance → ASG creates new
+Open ALB DNS → refresh
+```
+
+
+
+
+
+
+
+
+
+Week-10:
+PART 2: ELASTIC BEANSTALK DEPLOYMENT (STEPS)
+Open AWS Console
+Search → Elastic Beanstalk
+Click → Create Application
+Enter Name → MyMavenApp
+Click → Create
+Click → Create Environment
+Select → Web Server Environment
+Enter Environment Name → MyMavenEnv
+Select Platform → Tomcat
+
+Under Application Code:
+Select → Upload your code
+Upload file → target/myapp.war
+
+Service Role → LabRole
+Instance Profile → LabInstanceProfile
+
+VPC → default
+Public IP → Enabled
+Subnets → Select all
+
+Instance Type → t2.micro
+Min Instances → 1
+Max Instances → 2
+Load Balancer → Enabled
+
+Click → Create Environment
+
+Wait until status shows → Green
+
+Copy Environment URL
+Paste in browser
+
+OUTPUT → Application runs
+
+
+
+
+
+
+Here is your **WEEK-11 Amazon Lex – clean NOTEPAD format (no extra lines, exam-ready)** using **Amazon Web Services Amazon Lex**:
+
+---
+
+WEEK-11 AMAZON LEX CHATBOT
+
+1 Open AWS Console
+2 Search Amazon Lex
+3 Click Create bot
+4 Select Create blank bot
+5 Enter Bot name HotelBookingBot
+6 Create new IAM role
+7 Select language English
+8 Click Done
+
+INTENT CREATION
+9 Go to Intents
+10 Click Add intent
+11 Enter BookHotel
+12 Click Create
+
+UTTERANCES
+13 Add sample utterances
+I want to book a hotel
+Book a room
+Reserve hotel
+I need a room
+
+SLOTS CREATION
+
+14 Slot 1 age
+Slot name age
+Slot type AMAZON.Number
+Prompt What is your age
+Required Yes
+
+15 Conditional branching age
+IF {age} < 18
+Response You are not eligible for booking
+ELSE continue flow
+
+16 Slot 2 location
+Slot name location
+Slot type AMAZON.City
+Prompt Which city do you want
+Required Yes
+
+17 Slot 3 checkin
+Slot name checkin
+Slot type AMAZON.Date
+Prompt What is your check-in date
+Retry prompt Enter valid date YYYY-MM-DD
+Required Yes
+
+18 Slot 4 nights
+Slot name nights
+Slot type AMAZON.Number
+Prompt How many nights will you stay
+Required Yes
+
+CUSTOM SLOT TYPE
+
+19 Go to Slot Types
+20 Click Create slot type
+21 Name RoomType
+22 Add values
+Single
+Double
+Suite
+23 Save
+
+24 Use in slot roomtype
+Slot type RoomType
+Prompt Select room type
+
+CARD GROUP (BUTTONS)
+
+25 Go to slot roomtype
+26 Prompt → More prompt options
+27 Add card group
+Title Select Room Type
+Buttons
+Single → Single
+Double → Double
+Suite → Suite
+
+RESPONSES
+
+28 Initial response
+Welcome to Hotel Booking Bot
+
+29 Confirmation response
+Confirm booking in {location} for {nights} nights
+
+30 Success response
+Booking confirmed
+
+BUILD AND TEST
+
+31 Click Build
+32 Open Test chat
+33 Enter Book a hotel
+34 Bot asks age location checkin nights roomtype
+35 Bot confirms booking
+
+FLOW
+User → Intent → Utterances → Slots → Validation → Response
+
+COMMON POINTS
+Intent defines task
+Utterances are user inputs
+Slots collect data
+Slot types define allowed values
+Card groups show buttons
+Conditional branching adds logic
+
+---
+
+If you want, I can convert WEEK-8 to WEEK-12 into **ONE combined exam cheat sheet (very important for exams)** or give **viva questions with answers**.
+
+
+
+
+
+
+
+
+Week-12:
+WEEK-12 IAM USER GUI + CLI
+
+PART A GUI ACCESS
+1 Login to AWS Console as Root user
+2 Search IAM and open IAM dashboard
+3 Click Users → Create user
+4 Enter username S3_Specialist
+5 Enable Provide AWS Management Console access
+6 Set custom password
+7 Click Next
+8 Select Attach policies directly
+9 Choose AmazonS3FullAccess policy
+10 Click Next → Create user
+11 Download .csv file (contains username password console URL account ID)
+12 Copy Account ID from CSV or top right menu
+13 Sign out from root user
+14 Open IAM login URL
+15 Login using Account ID username password
+
+TEST GUI
+16 Go to EC2 → should show Access Denied
+17 Go to S3 → Create bucket should work
+
+PART B CLI ACCESS
+18 Go to IAM → Users → S3_Specialist
+19 Open Security credentials tab
+20 Click Create access key
+21 Select Command Line Interface (CLI)
+22 Download .csv file (Access Key ID Secret Key)
+
+23 Install AWS CLI on system
+24 Open CMD
+25 Run aws --version
+
+26 Configure CLI
+aws configure
+enter Access Key ID
+enter Secret Access Key
+enter region ap-south-1
+enter output json
+
+TEST CLI
+27 aws s3 ls (should work)
+28 aws s3 mb s3://bucket-name (should work if allowed)
+29 aws iam list-users (Access Denied expected)
+
+RESULT
+30 S3 access allowed in GUI and CLI
+31 EC2 IAM access denied
+32 IAM policy controls permissions
+
+
+
+
+
+WEEK-EC2 IAM ROLE (S3 ACCESS WITHOUT KEYS)
+
+1 Login to AWS Console
+2 Open IAM service
+3 Go to Roles → Create role
+4 Select Trusted entity → AWS service
+5 Choose Use case → EC2
+6 Click Next
+
+7 Attach policy → AmazonS3FullAccess
+8 Click Next
+
+9 Role name → EC2-S3-Role
+10 Click Create role
+
+11 Go to EC2 Dashboard → Launch Instance
+12 Name instance MyEC2
+13 Choose Amazon Linux AMI
+14 Select instance type t2.micro
+15 Configure key pair
+
+16 Configure Security Group → Allow SSH (22)
+17 Launch instance
+
+18 Go to EC2 Instances
+19 Select instance
+20 Actions → Security → Modify IAM role
+21 Select EC2-S3-Role
+22 Click Update IAM role
+
+23 SSH into EC2 instance
+ssh -i key.pem ec2-user@public-ip
+
+24 Run aws s3 ls (works)
+25 Run aws ec2 describe-instances (Access Denied)
+
+END
+IAM Role provides temporary credentials to EC2 without access keys
