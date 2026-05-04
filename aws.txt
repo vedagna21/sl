@@ -1,3 +1,90 @@
+import RPi.GPIO as GPIO
+import time
+
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BOARD)
+
+PIR = 3
+
+GPIO.setup(PIR, GPIO.IN)
+
+while True:
+    if GPIO.input(PIR) == 1:
+        print("Motion Detected!")
+    else:
+        print("No Motion")
+    
+    time.sleep(1)
+import RPi.GPIO as GPIO
+import time
+
+TRIG, ECHO = 18, 24
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(TRIG, GPIO.OUT)
+GPIO.setup(ECHO, GPIO.IN)
+
+def distance():
+    GPIO.output(TRIG, True)
+    time.sleep(0.00001)
+    GPIO.output(TRIG, False)
+
+    while GPIO.input(ECHO) == 0:
+        start = time.time()
+    while GPIO.input(ECHO) == 1:
+        end = time.time()
+
+    return (end - start) * 17150   # distance in cm
+
+try:
+    while True:
+        print("Distance:", round(distance(), 1), "cm")
+        time.sleep(1)
+except KeyboardInterrupt:
+    GPIO.cleanup()
+from picamera import PiCamera, Color
+from time import sleep
+
+cam = PiCamera()
+cam.rotation = 180
+
+# preview
+cam.start_preview()
+sleep(2)
+
+# capture image
+cam.capture('/home/pi/image.jpg')
+
+# add text + effect
+cam.annotate_text = "Hello KMIT"
+cam.annotate_background = Color('yellow')
+cam.annotate_foreground = Color('blue')
+cam.image_effect = 'watercolor'
+
+# record video
+cam.start_recording('/home/pi/video.h264')
+sleep(5)
+cam.stop_recording()
+
+cam.stop_preview()
+
+import RPi.GPIO as GPIO
+import time
+
+GPIO.setwarnings(False)
+GPIO.setmode(GPIO.BOARD)
+
+LED = 10   # pin number
+
+GPIO.setup(LED, GPIO.OUT)
+
+while True:
+    GPIO.output(LED, 1)   # ON
+    print("LED ON")
+    time.sleep(1)
+
+    GPIO.output(LED, 0)   # OFF
+    print("LED OFF")
+    time.sleep(1)
 Ok BRO now I understand what exactly you want:
 
 ➡️ **ONLY STEPS – Plain text – No explanation – No formatting – No decoration**
