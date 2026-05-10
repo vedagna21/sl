@@ -1,3 +1,738 @@
+```text id="d7x2qm"
+1. CREATE LINUX EC2 INSTANCE (UBUNTU)
+STEP 1:
+AWS Console → Search EC2 → EC2 Dashboard
+STEP 2:
+Left Menu → Instances → Launch Instances
+STEP 3:
+Name → Enter Instance Name
+STEP 4:
+Application and OS Images (AMI) → Select Ubuntu Server / Amazon Linux
+STEP 5:
+Instance Type → Select t2.micro
+STEP 6:
+Key Pair → Create New Key Pair → Enter Key Name → Select:
+.pem = Linux/Mac/CloudShell
+.ppk = PuTTY
+→ Create Key Pair → Download Key
+STEP 7:
+Network Settings → Allow SSH Traffic → Port = 22 → Source = My IP
+STEP 8:
+Launch Instance → Click Launch Instance
+
+2. CONNECT LINUX EC2 USING SSH
+STEP 1:
+Open Terminal / CMD / PowerShell
+STEP 2:
+Go to folder where .pem file exists
+STEP 3:
+Run:
+chmod 400 key.pem
+STEP 4:
+Connect to Ubuntu:
+ssh -i key.pem ubuntu@PUBLIC-IP
+FOR AMAZON LINUX:
+ssh -i key.pem ec2-user@PUBLIC-IP
+STEP 5:
+Verify:
+whoami
+OUTPUT:
+ubuntu
+
+3. CONNECT LINUX EC2 USING PuTTY (.ppk)
+PREREQUISITES:
+PuTTY Installed
+PuTTYgen Installed
+.pem Key File
+DOWNLOAD:
+https://www.putty.org
+STEP 1:
+Open PuTTYgen → Click Load → Select .pem file → Save Private Key → Save as .ppk
+STEP 2:
+AWS Console → EC2 → Instances → Select Instance → Copy Public DNS/IP
+STEP 3:
+Open PuTTY
+Session:
+Host Name:
+ubuntu@PUBLIC-IP
+STEP 4:
+Connection → SSH → Auth → Credentials → Browse → Select .ppk file
+STEP 5:
+Click Open → Click Yes for Security Alert
+CONNECTED SUCCESSFULLY
+STEP 6:
+Verify:
+whoami
+OUTPUT:
+ubuntu
+
+4. CONNECT EC2 USING AWS CLOUDSHELL
+STEP 1:
+Login AWS Console
+STEP 2:
+Top Right Corner → Click CloudShell Icon
+STEP 3:
+EC2 → Instances → Select Instance → Connect
+STEP 4:
+Open SSH Client Tab → Copy SSH Command
+Example:
+ssh -i "key.pem" ubuntu@PUBLIC-IP
+STEP 5:
+CloudShell → Click Actions (+) → Upload File → Upload .pem file
+STEP 6:
+Run:
+chmod 400 key.pem
+STEP 7:
+Paste SSH Command Again:
+ssh -i "key.pem" ubuntu@PUBLIC-IP
+CONNECTED SUCCESSFULLY
+
+5. CREATE WINDOWS EC2 INSTANCE
+STEP 1:
+AWS Console → EC2 → Instances → Launch Instances
+STEP 2:
+Name → Enter Instance Name
+STEP 3:
+AMI → Select Windows Server 2019/2022
+STEP 4:
+Instance Type → Select t2.micro
+STEP 5:
+Key Pair → Create / Select Key Pair → Download .pem file
+STEP 6:
+Security Group → Allow RDP Traffic → Port = 3389 → Source = My IP
+STEP 7:
+Launch Instance → Click Launch
+
+6. CONNECT WINDOWS EC2 USING RDP
+STEP 1:
+AWS Console → EC2 → Instances → Select Windows Instance
+STEP 2:
+Copy Public IP / Public DNS
+STEP 3:
+Connect → RDP Client Tab → Get Password
+STEP 4:
+Upload .pem file → Click Decrypt Password
+STEP 5:
+Copy:
+Username = Administrator
+Password = Decrypted Password
+STEP 6:
+Windows + R → Type:
+mstsc
+STEP 7:
+Computer → Paste Public IP/DNS
+STEP 8:
+Username:
+Administrator
+STEP 9:
+Paste Password → Click OK
+CONNECTED SUCCESSFULLY
+
+1. CREATE AND ATTACH EBS VOLUME TO EC2 INSTANCE
+STEP 1:
+AWS Console → EC2 → Volumes → Create Volume
+STEP 2:
+Select:
+Volume Type = gp3/gp2
+Size = Required Size
+Availability Zone = Same as EC2 Instance
+STEP 3:
+Click Create Volume
+STEP 4:
+Volumes → Select Created Volume → Actions → Attach Volume
+STEP 5:
+Select:
+Instance = Your EC2 Instance
+Device Name = /dev/xvdf
+STEP 6:
+Click Attach
+STEP 7:
+Connect to EC2 using SSH
+STEP 8:
+Verify Attached Disk:
+lsblk
+STEP 9:
+Identify New Volume:
+Example:
+xvdf / nvme1n1
+
+2. SCALE EC2 INSTANCE BY CHANGING INSTANCE TYPE
+STEP 1:
+AWS Console → EC2 → Instances
+STEP 2:
+Select EC2 Instance
+STEP 3:
+Instance State → Stop Instance
+STEP 4:
+Actions → Instance Settings → Change Instance Type
+STEP 5:
+Select Higher Instance Type
+Example:
+t2.micro → t2.small / t2.medium
+STEP 6:
+Click Apply / Change
+STEP 7:
+Start Instance
+STEP 8:
+Verify Increased CPU/RAM
+
+3. ATTACH AND PERMANENTLY MOUNT EBS VOLUME
+STEP 1:
+AWS Console → EC2 → Volumes → Create Volume
+STEP 2:
+Select:
+Volume Type = gp3
+Size = 20GB
+Availability Zone = Same as EC2
+STEP 3:
+Click Create Volume
+STEP 4:
+Select Volume → Actions → Attach Volume
+STEP 5:
+Select:
+Instance = Linux EC2
+Device Name = /dev/xvdf
+STEP 6:
+Click Attach
+STEP 7:
+Connect to EC2:
+ssh -i key.pem ec2-user@PUBLIC-IP
+UBUNTU:
+ssh -i key.pem ubuntu@PUBLIC-IP
+STEP 8:
+Check Disks:
+lsblk
+STEP 9:
+Check Filesystem:
+lsblk -fs
+STEP 10:
+Create Partition:
+fdisk /dev/nvme1n1
+INSIDE fdisk:
+m
+n
+p
+Enter
+Enter
+Enter
+w
+STEP 11:
+Notify Kernel:
+partprobe
+STEP 12:
+Verify Partition:
+lsblk -fs
+STEP 13:
+Format Partition:
+mkfs.xfs /dev/nvme1n1p1
+STEP 14:
+Create Mount Directory:
+mkdir /mnt/archana
+STEP 15:
+Mount Volume:
+mount /dev/nvme1n1p1 /mnt/archana
+STEP 16:
+Verify:
+df -h
+STEP 17:
+Get UUID:
+blkid /dev/nvme1n1p1
+STEP 18:
+Edit fstab:
+nano /etc/fstab
+ADD:
+UUID=YOUR-UUID /mnt/archana xfs defaults,nofail 0 0
+STEP 19:
+Save and Exit
+STEP 20:
+Test fstab:
+mount -a
+STEP 21:
+Go to Directory:
+cd /mnt/archana
+STEP 22:
+Create File:
+touch f1
+STEP 23:
+Reboot:
+reboot
+STEP 24:
+Reconnect and Verify:
+df -h
+```
+
+
+
+
+
+
+
+
+1. CREATE TWO EC2 INSTANCES FOR EFS
+STEP 1:
+AWS Console → EC2 → Launch Instance
+STEP 2:
+Name:
+EFS-1
+STEP 3:
+AMI:
+Amazon Linux
+STEP 4:
+Instance Type:
+t2.micro
+STEP 5:
+Key Pair:
+Create / Select Key Pair
+STEP 6:
+Network Settings:
+Subnet = Subnet-1a
+STEP 7:
+Create Security Group:
+Allow:
+SSH → Port 22 → My IP
+NFS → Port 2049 → Anywhere
+STEP 8:
+Click Launch Instance
+STEP 9:
+Repeat Same Steps for Second Instance
+Name:
+EFS-2
+Subnet:
+Subnet-1b
+
+2. CREATE EFS FILE SYSTEM
+STEP 1:
+AWS Console → EFS
+STEP 2:
+Click Create File System
+STEP 3:
+Select:
+Name = Optional
+VPC = Default
+Enable Regional
+STEP 4:
+Click Next
+STEP 5:
+Network Settings:
+Delete Default Security Groups
+STEP 6:
+Select NFS Security Group
+(Same SG used for EC2)
+STEP 7:
+Click Next
+STEP 8:
+Review Configuration
+STEP 9:
+Click Create File System
+
+3. CONNECT TO EC2 INSTANCES
+STEP 1:
+Open Two PowerShell / Terminal Windows
+STEP 2:
+Connect to EFS-1:
+ssh -i key.pem ec2-user@PUBLIC-IP
+STEP 3:
+Switch to Root User:
+sudo su
+STEP 4:
+Create Directory:
+mkdir efs
+STEP 5:
+Install EFS Utilities:
+yum install -y amazon-efs-utils
+STEP 6:
+Verify Files:
+ls
+STEP 7:
+Optional Verify:
+efs-utils --version
+STEP 8:
+Repeat Same Steps for EFS-2 Instance
+
+4. ATTACH EFS TO EC2 INSTANCES
+STEP 1:
+AWS Console → EFS
+STEP 2:
+Select EFS File System
+STEP 3:
+Click Attach
+STEP 4:
+Select:
+Mount via DNS
+STEP 5:
+Copy Mount Command
+Example:
+mount -t efs fs-12345678:/ efs
+STEP 6:
+Paste Command in EFS-1 Terminal
+STEP 7:
+Paste Same Command in EFS-2 Terminal
+
+5. VERIFY EFS
+STEP 1:
+Go to Mounted Directory:
+cd efs
+STEP 2:
+Create File in EFS-1:
+touch file1
+STEP 3:
+Go to EFS-2:
+cd efs
+STEP 4:
+Verify File:
+ls
+OUTPUT:
+file1
+STEP 5:
+Create File in EFS-2:
+touch file2
+STEP 6:
+Verify in EFS-1:
+ls
+OUTPUT:
+file1
+file2
+
+1. CREATE S3 BUCKET AND ENABLE PUBLIC ACCESS
+STEP 1:
+AWS Console → Services → S3
+STEP 2:
+Click Create Bucket
+STEP 3:
+Enter:
+Bucket Name = my-public-bucket-123
+Region = Nearest Region
+STEP 4:
+Under Block Public Access:
+Uncheck:
+Block All Public Access
+STEP 5:
+Check:
+I acknowledge that this bucket will become public
+STEP 6:
+Click Create Bucket
+STEP 7:
+Open Bucket
+STEP 8:
+Permissions Tab → Access Control List (ACL) → Edit
+STEP 9:
+Under Public Access:
+Everyone (public access) → Read
+STEP 10:
+Save Changes
+STEP 11:
+Objects Tab → Upload
+STEP 12:
+Add Files → Select File → Upload
+STEP 13:
+Open Uploaded Object
+STEP 14:
+Permissions → ACL → Edit
+STEP 15:
+Everyone (public access) → Read
+STEP 16:
+Save Changes
+STEP 17:
+Copy Object URL
+STEP 18:
+Open URL in Browser / Incognito
+OUTPUT:
+Object Accessible Publicly
+
+2. ENABLE VERSIONING IN S3
+STEP 1:
+AWS Console → S3
+STEP 2:
+Select Bucket
+STEP 3:
+Properties Tab
+STEP 4:
+Bucket Versioning → Edit
+STEP 5:
+Enable Versioning
+STEP 6:
+Save Changes
+STEP 7:
+Upload File:
+report.pdf
+OUTPUT:
+Version ID Created
+STEP 8:
+Upload Same File Again:
+report.pdf
+OUTPUT:
+New Version Created
+Old Version Preserved
+STEP 9:
+Delete report.pdf
+OUTPUT:
+Delete Marker Created
+Previous Versions Still Available
+
+3. CROSS REGION REPLICATION (CRR)
+STEP 1:
+AWS Console → S3 → Create Bucket
+STEP 2:
+Enter:
+Bucket Name = dest-crr-bucket
+Region = Different Region
+STEP 3:
+Create Bucket
+STEP 4:
+Enable Versioning on Destination Bucket
+STEP 5:
+Open Source Bucket
+STEP 6:
+Management Tab → Replication Rules
+STEP 7:
+Click Create Replication Rule
+STEP 8:
+Enter:
+Rule Name = academy-crr-rule
+Status = Enabled
+Scope = Apply to All Objects
+STEP 9:
+Destination:
+Another Bucket → Select Destination Bucket
+STEP 10:
+Select:
+Use AWS Managed Role / Default Role
+STEP 11:
+Replication Options:
+Replicate New Objects
+STEP 12:
+Save Rule
+STEP 13:
+Upload File to Source Bucket:
+image.png
+STEP 14:
+Open Destination Bucket
+OUTPUT:
+image.png Automatically Replicated
+
+4. STATIC WEBSITE HOSTING IN S3
+STEP 1:
+AWS Console → S3 → Create Bucket
+STEP 2:
+Enter:
+Bucket Name = my-static-site-bucket-123
+Region = Nearest Region
+STEP 3:
+Uncheck:
+Block All Public Access
+STEP 4:
+Acknowledge Warning
+STEP 5:
+Click Create Bucket
+STEP 6:
+Open Bucket → Objects Tab → Upload
+STEP 7:
+Upload:
+index.html
+error.html
+STEP 8:
+Properties Tab → Static Website Hosting → Edit
+STEP 9:
+Enable:
+Host a Static Website
+STEP 10:
+Enter:
+Index Document = index.html
+Error Document = error.html
+STEP 11:
+Save Changes
+STEP 12:
+Permissions Tab → ACL → Edit
+STEP 13:
+Everyone (public access) → Read
+STEP 14:
+Save Changes
+STEP 15:
+Open index.html → Permissions → ACL → Edit
+STEP 16:
+Everyone (public access) → Read
+STEP 17:
+Save Changes
+STEP 18:
+Repeat Same Steps for error.html
+STEP 19:
+Properties → Static Website Hosting
+STEP 20:
+Copy Bucket Website Endpoint
+Example:
+http://bucket-name.s3-website-region.amazonaws.com
+STEP 21:
+Open URL in Browser
+OUTPUT:
+index.html Page Loads Successfully
+STEP 22:
+Test Error Page:
+http://bucket-name.s3-website-region.amazonaws.com/invalid.html
+OUTPUT:
+error.html Page Displays
+
+1. CREATE VPC
+STEP 1:
+AWS Console → VPC
+STEP 2:
+Click Create VPC
+STEP 3:
+Select:
+VPC Only
+STEP 4:
+Enter:
+Name = Custom-VPC
+IPv4 CIDR = 10.0.0.0/16
+STEP 5:
+Click Create VPC
+
+2. CREATE PUBLIC AND PRIVATE SUBNETS
+STEP 1:
+VPC Dashboard → Subnets → Create Subnet
+STEP 2:
+Select:
+VPC = Custom-VPC
+STEP 3:
+Create Public Subnet:
+Name = Public-Subnet
+Availability Zone = ap-south-1a
+CIDR = 10.0.1.0/24
+STEP 4:
+Click Create Subnet
+STEP 5:
+Create Private Subnet:
+Name = Private-Subnet
+Availability Zone = ap-south-1a
+CIDR = 10.0.2.0/24
+STEP 6:
+Click Create Subnet
+
+3. CREATE INTERNET GATEWAY (IGW)
+STEP 1:
+VPC Dashboard → Internet Gateways
+STEP 2:
+Click Create Internet Gateway
+STEP 3:
+Enter:
+Name = Custom-IGW
+STEP 4:
+Click Create
+STEP 5:
+Select IGW → Actions → Attach to VPC
+STEP 6:
+Select:
+Custom-VPC
+STEP 7:
+Click Attach Internet Gateway
+
+4. CREATE PUBLIC ROUTE TABLE
+STEP 1:
+VPC Dashboard → Route Tables
+STEP 2:
+Click Create Route Table
+STEP 3:
+Enter:
+Name = Public-RT
+VPC = Custom-VPC
+STEP 4:
+Click Create Route Table
+STEP 5:
+Select Public-RT → Routes → Edit Routes
+STEP 6:
+Add Route:
+Destination = 0.0.0.0/0
+Target = Internet Gateway
+STEP 7:
+Save Changes
+STEP 8:
+Subnet Associations → Edit Associations
+STEP 9:
+Select:
+Public-Subnet
+STEP 10:
+Save Associations
+
+5. CREATE PRIVATE ROUTE TABLE
+STEP 1:
+Route Tables → Create Route Table
+STEP 2:
+Enter:
+Name = Private-RT
+VPC = Custom-VPC
+STEP 3:
+Click Create Route Table
+STEP 4:
+Keep Default Local Route Only
+STEP 5:
+Subnet Associations → Edit Associations
+STEP 6:
+Select:
+Private-Subnet
+STEP 7:
+Save Associations
+
+6. ENABLE AUTO ASSIGN PUBLIC IP
+STEP 1:
+VPC Dashboard → Subnets
+STEP 2:
+Select:
+Public-Subnet
+STEP 3:
+Actions → Edit Subnet Settings
+STEP 4:
+Enable:
+Auto-Assign Public IPv4 Address
+STEP 5:
+Save
+
+7. CREATE SECURITY GROUP
+STEP 1:
+EC2 Dashboard → Security Groups
+STEP 2:
+Click Create Security Group
+STEP 3:
+Enter:
+Name = Web-SG
+VPC = Custom-VPC
+STEP 4:
+Inbound Rules:
+HTTP → Port 80 → Anywhere
+HTTPS → Port 443 → Anywhere
+SSH → Port 22 → My IP
+STEP 5:
+Click Create Security Group
+
+8. LAUNCH EC2 INSTANCES
+STEP 1:
+EC2 Dashboard → Launch Instance
+STEP 2:
+Create Public EC2:
+Subnet = Public-Subnet
+Auto Public IP = Enabled
+Security Group = Web-SG
+STEP 3:
+Launch Instance
+STEP 4:
+Launch Another EC2
+STEP 5:
+Create Private EC2:
+Subnet = Private-Subnet
+Auto Public IP = Disabled
+Security Group = Web-SG
+STEP 6:
+Launch Instance
+```
+
+
+
+
+
+
+
+
+
+
+
 Week-6 : VPC USING NAT GATEWAY
 
 🧱 STEP 1: Create VPC
