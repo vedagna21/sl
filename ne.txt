@@ -919,7 +919,103 @@ Architecture: x86_64
 Click Save
 
 
-
+CCLAB-7
+WEEK-7:
+step-by-step procedure for setting up an AWS Lambda function to
+trigger whenever an object is uploaded to an S3 bucket and update a
+DynamoDB table:
+STEP-1: Create the S3 Bucket
+-Search for S3 bucket in amazon console
+-Click on the create bucket in the S3 bucket console
+-Select general purpose
+-Name the bucket as you needed
+-Enable Versioning
+-Click on the create bucket
+STEP-2: Create a AWS DynamoDB service table
+-Search for dynamodb in the search bar of amazon
+console -Click on the create table
+-GIve any name to the table
+Eg. newtable
+-Name the row as unique with type string
+STEP-3: Creating the lambda function
+-Search for aws lambda
+-Click on the create function
+-Choose Author from scratch
+-Type any name in the function name input
+-Choose a runtime
+Eg.Python
+-In permissions choose the role type
+If available labrole in the existing roles
+Or
+Create a new role with basic lambda permissions
+-click on the create function
+STEP-4: Adding trigger to connect the S3 bucket and DynamoDB
+-Click on the Add trigger in the created function
+-Search for S3 bucket in the trigger configuration
+-Select the S3 bucket
+-Choose the bucket which you want to apply the trigger
+-Select All object create event in the event type, Acknoledge
+-click on the add
+STEP: 5 Creating the deplyoment code and monitoring
+-Add the code for triggering when object is uploaded
+Eg
+import boto3
+from uuid import uuid4
+deflambda_handler(event, context):
+s3 = boto3.client("s3")
+dynamodb = boto3.resource('dynamodb')
+# Check if the 'Records' key is present in the event
+if'Records'in event:
+# Iterate over each record in the event
+for record in event['Records']:
+bucket_name = record['s3']['bucket']['name']
+object_key = record['s3']['object']['key']
+size = record['s3']['object'].get('size', -1)
+event_name = record.get('eventName', 'Unknown') # Use get()
+method to handle missing keys
+event_time = record.get('eventTime', 'Unknown') # Use get() method
+to handle missing keys
+dynamoTable = dynamodb.Table('newtable')
+dynamoTable.put_item(
+Item={'unique': str(uuid4()), 'Bucket': bucket_name, 'Object':
+object_key,'Size': size, 'Event': event_name, 'EventTime': event_time})
+else:
+# Log a message indicating that the 'Records' key is missing from the
+event
+print("No 'Records' key found in the event.")
+Create a policy if you are getting the Iam role problem Otherwise skip
+this
+-Search for IAM console in AWS console
+-Go to roles
+-Select the Lamda function name like you gave in the labmda creation
+-In permission policies click on add permissions
+-Select create inline policy
+-Click on the JSON in the policy editor
+Write this policy code in that editor
+{
+"Version": "2012-10-17",
+"Statement": [
+{
+"Effect": "Allow", "Action": "dynamodb:PutItem",
+"Resource": "arn:aws:dynamodb:us-west
+2:669420739378:table/newtable"
+}
+]
+}
+-Click on the next
+-Give any policy name
+Eg.lambda-dynamo-policy
+-Click on the create policy
+STEP-6 : Upload any file(s) in the S3 bucket it will triggers and shows in both
+S3 bucket and the DynamoDB
+-Click on the explore items in the DynamoDB
+-click on the run
+You’ll able to see the objects in the dynamodb which is uploaded in the S3
+bucket
+STEP-7: Monitoring using cloud watch
+-Click on the Monitor tab in the lambda function
+-Click on the view cloudwatch logs
+-Click on the time lines and check the logs\
 
 
 Week-8:
